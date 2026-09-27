@@ -16,6 +16,41 @@ from pathlib import Path
 
 INTERACTION_KINDS = {"interact", "transfer", "state_change"}
 H3_MODES = {"T2VA", "I2VA", "FL2VA", "L2VA", "Ref2VA"}
+MODEL_PROFILES = {
+    "minimax-h3": {"min": 4, "max": 15, "allowed": None},
+    "seedance-2": {"min": 2, "max": 15, "allowed": None},
+    "veo-3.1": {"min": 4, "max": 8, "allowed": (4, 6, 8)},
+    "kling-3": {"min": 3, "max": 15, "allowed": None},
+    "wan-2.6": {"min": 5, "max": 15, "allowed": (5, 10, 15)},
+    "ltx-2": {"min": 0, "max": 20, "allowed": None},
+    "generic": {"min": 0, "max": 15, "allowed": None},
+}
+
+
+def reference_kind(ref):
+    """Classify a declared asset without interpreting its visual contents."""
+    if ref.get("kind") in {"image", "video", "audio"}:
+        return ref["kind"]
+    label = ref.get("label", "").lower()
+    if label.startswith(("<picture ", "@image", "image ")):
+        return "image"
+    if label.startswith(("<video ", "@video", "video ")):
+        return "video"
+    if label.startswith(("<audio ", "@audio", "audio ")):
+        return "audio"
+    suffix = Path(ref.get("path", "")).suffix.lower()
+    if suffix in {".png", ".jpg", ".jpeg", ".webp", ".heic"}:
+        return "image"
+    if suffix in {".mp4", ".mov", ".webm"}:
+        return "video"
+    if suffix in {".wav", ".mp3", ".m4a"}:
+        return "audio"
+    return "unknown"
+
+
+def is_endpoint_frame(ref):
+    role = ref.get("role", "").lower()
+    return reference_kind(ref) == "image" and ("first frame" in role or "last frame" in role)
 
 
 def issue(code, message, stage, severity="major", action=None):
@@ -35,6 +70,9 @@ def fix_for(code):
         "TIMING": "Split into clips or increase duration without dropping events.",
         "AMBIGUITY": "Resolve the actor, target, direction or event order in ScenePlan.",
         "PROMPT_DRIFT": "Regenerate the prompt from the approved ScenePlan.",
+        "MODEL_REQUIRED": "Ask which video generator and version the prompt targets.",
+        "REFERENCE_UNSUPPORTED": "Use the reference for planning only or choose a model mode that accepts it.",
+        "REFERENCE_SCOPE": "Provide endpoint frames for each clip or fit the action into one generation clip.",
     }
     return fixes.get(code, "Repair the indicated stage and validate again.")
 
@@ -129,12 +167,21 @@ def validate(plan):
         problems.append(issue("SCHEMA", "Original idea is empty", "scene-interpreter"))
     if not plan["actions"]:
         problems.append(issue("SCHEMA", "At least one observable action is required", "scene-interpreter"))
-    if plan.get("model", "minimax-h3") == "minimax-h3":
-        mode = plan.get("h3_mode", "Ref2VA" if plan["references"] else "T2VA")
-        labels = [ref.get("label") for ref in plan["references"]]
+    model = plan.get("model")
+    if model not in MODEL_PROFILES:
+        problems.append(issue("MODEL_REQUIRED", f"Choose a supported video generator; received {model!r}", "scene-interpreter"))
+        return result(problems)
+    if model not in {"minimax-h3", "generic"}:
+        for ref in plan["references"]:
+            if reference_kind(ref) == "unknown":
+                problems.append(issue("AMBIGUITY", f"Reference {ref['id']} needs kind: image, video or audio", "scene-interpreter"))
+    if model == "minimax-h3":
+        generation_refs = [ref for ref in plan["references"] if ref.get("generation_input", True)]
+        mode = plan.get("h3_mode", "Ref2VA" if generation_refs else "T2VA")
+        labels = [ref.get("label") for ref in generation_refs]
         if mode not in H3_MODES:
             problems.append(issue("SCHEMA", f"Unknown H3 mode {mode}", "scene-interpreter"))
-        if mode == "Ref2VA" and not plan["references"]:
+        if mode == "Ref2VA" and not generation_refs:
             problems.append(issue("AMBIGUITY", "Ref2VA requires a named reference", "scene-interpreter"))
         if mode in {"I2VA", "FL2VA", "L2VA"} and not any(label == "<Picture 1>" for label in labels):
             problems.append(issue("AMBIGUITY", "Keyframe mode requires <Picture 1>", "scene-interpreter"))
@@ -142,7 +189,7 @@ def validate(plan):
             problems.append(issue("AMBIGUITY", "FL2VA requires <Picture 2>", "scene-interpreter"))
         if len(labels) != len(set(labels)) or any(not label for label in labels):
             problems.append(issue("AMBIGUITY", "Reference labels must be present and unique", "scene-interpreter"))
-        if mode == "T2VA" and plan["references"]:
+        if mode == "T2VA" and generation_refs:
             problems.append(issue("AMBIGUITY", "T2VA cannot use supplied media references; select a reference mode", "scene-interpreter"))
         if mode != "Ref2VA" and any(label and (label.startswith("<Video ") or label.startswith("<Audio ")) for label in labels):
             problems.append(issue("AMBIGUITY", "Video/audio references require Ref2VA", "scene-interpreter"))
@@ -150,13 +197,20 @@ def validate(plan):
             counts = {prefix: sum(bool(label and label.startswith(f"<{prefix} ")) for label in labels) for prefix in ("Picture", "Video", "Audio")}
             if counts["Picture"] > 9 or counts["Video"] > 3 or counts["Audio"] > 3 or len(labels) > 12:
                 problems.append(issue("SCHEMA", "Ref2VA exceeds official reference count limits", "scene-interpreter"))
-            for ref in plan["references"]:
+            for ref in generation_refs:
                 if ref.get("label", "").startswith(("<Video ", "<Audio ")) and "duration" in ref and not 2 <= float(ref["duration"]) <= 15:
                     problems.append(issue("SCHEMA", f"Reference {ref['id']} must last 2–15 seconds", "scene-interpreter"))
             for prefix in ("<Video ", "<Audio "):
-                total = sum(float(ref.get("duration", 0)) for ref in plan["references"] if ref.get("label", "").startswith(prefix))
+                total = sum(float(ref.get("duration", 0)) for ref in generation_refs if ref.get("label", "").startswith(prefix))
                 if total > 15:
                     problems.append(issue("SCHEMA", f"Total {prefix[1:-1].lower()} reference time exceeds 15 seconds", "scene-interpreter"))
+    elif model in {"veo-3.1", "ltx-2"}:
+        for ref in plan["references"]:
+            kind = reference_kind(ref)
+            if ref.get("generation_input", True) and kind in {"video", "audio"}:
+                problems.append(issue("REFERENCE_UNSUPPORTED", f"{model} adapter cannot attach {kind} {ref['id']} as a free-form generation reference", "model-adapter"))
+        if model == "veo-3.1" and sum(reference_kind(ref) == "image" and ref.get("generation_input", True) for ref in plan["references"]) > 3:
+            problems.append(issue("REFERENCE_UNSUPPORTED", "Veo 3.1 accepts at most three generation reference images", "model-adapter"))
     camera_state = copy.deepcopy(plan["camera"].get("position"))
     states = [{"after": "initial", "entities": copy.deepcopy(entities), "camera_position": copy.deepcopy(camera_state)}]
     action_ids = set()
@@ -244,6 +298,8 @@ def validate(plan):
                     problems.append(issue("OCCLUSION", f"Camera view of {focus} blocked by {blocker}", "blocking-director", action=action["id"]))
     timeline, timing_issues = plan_timeline(plan)
     problems.extend(timing_issues)
+    if len(timeline) > 1 and any(is_endpoint_frame(ref) and ref.get("generation_input", True) for ref in plan["references"]):
+        problems.append(issue("REFERENCE_SCOPE", "A global first/last frame cannot anchor multiple generation clips", "shot-timeline-planner"))
     output = result(problems)
     output["world_states"] = states
     output["timeline"] = timeline
@@ -330,7 +386,9 @@ def plan_timeline(plan):
     total = max(minimum, requested)
     spare = max(0, total - minimum)
     durations = [float(a.get("min_duration", 1)) + spare / len(actions) for a in actions] if actions else []
-    max_clip = 15 if plan.get("model", "minimax-h3") == "minimax-h3" else float(plan["scene"].get("max_clip_duration", 15))
+    model = plan["model"]
+    profile = MODEL_PROFILES[model]
+    max_clip = min(profile["max"], float(plan["scene"].get("max_clip_duration", profile["max"])))
     clips, current, elapsed = [], [], 0.0
     for action, duration in zip(actions, durations):
         if duration > max_clip:
@@ -349,7 +407,15 @@ def plan_timeline(plan):
         for action, duration in clip:
             beats.append({"action_id": action["id"], "start": round(cursor, 2), "end": round(cursor + duration, 2)})
             cursor += duration
-        effective = max(4, math.ceil(cursor - 1e-9)) if plan.get("model", "minimax-h3") == "minimax-h3" else round(cursor, 2)
+        if profile["allowed"]:
+            valid_lengths = [n for n in profile["allowed"] if n >= cursor - 1e-9]
+            if model == "veo-3.1" and any(reference_kind(r) == "image" and r.get("generation_input", True) for r in plan["references"]):
+                valid_lengths = [n for n in valid_lengths if n == 8]
+            effective = valid_lengths[0] if valid_lengths else math.ceil(cursor)
+        elif profile["min"]:
+            effective = max(profile["min"], math.ceil(cursor - 1e-9))
+        else:
+            effective = round(cursor, 2)
         if effective > max_clip:
             issues.append(issue("TIMING", f"Clip {clip_index} exceeds model limit", "shot-timeline-planner"))
         timeline.append({"clip": clip_index, "duration": effective, "beats": beats})
@@ -361,10 +427,94 @@ def result(problems):
     return {"status": "FAIL" if fatal else "PASS", "severity": "critical" if any(p["severity"] == "critical" for p in problems) else "major" if fatal else "minor" if problems else "none", "issues": problems}
 
 
+def reference_summary(plan, model):
+    refs = [ref for ref in plan["references"] if ref.get("generation_input", True)]
+    numbers = {"image": 0, "video": 0, "audio": 0}
+    labels = []
+    for ref in refs:
+        kind = reference_kind(ref)
+        numbers[kind] += 1
+        n = numbers[kind]
+        if model == "seedance-2":
+            label = f"@{kind.title()}{n}"
+        elif model == "wan-2.6":
+            label = f"{kind.title()} {n}"
+        elif model == "kling-3":
+            label = f"@Ref{len(labels) + 1}"
+        elif model == "veo-3.1":
+            label = f"Reference image {n}"
+        else:
+            label = f"reference {kind} {n}"
+        labels.append(f"{label}: {ref.get('description', ref['id'])} ({ref['role']})")
+    return "; ".join(labels)
+
+
+def render_other_model(plan, model, clip, opening, camera, continuity, beat_lines):
+    """Format the same approved beats for a selected generator."""
+    setting = plan["scene"].get("location", "unspecified location")
+    style = plan["scene"].get("style", "")
+    refs = reference_summary(plan, model)
+    sound = plan.get("soundscape", "")
+    music = plan.get("music", "")
+    sequence = " ".join(beat_lines)
+    if model == "seedance-2":
+        return "\n".join(filter(None, [
+            f"Scene: {setting}. {opening}",
+            f"Reference assets: {refs}." if refs else "",
+            f"Action sequence: {sequence}",
+            f"Camera: {camera}.",
+            f"Audio: {sound}" if sound else "",
+            f"Music: {music}" if music else "",
+            f"Style: {style}." if style else "",
+            f"Continuity: {continuity}",
+        ]))
+    if model == "veo-3.1":
+        return "\n".join(filter(None, [
+            f"A {clip['duration']}-second video in {setting}. {opening}",
+            f"Use the supplied images only for their declared roles: {refs}." if refs else "",
+            f"The action unfolds in this order: {sequence}",
+            f"Camera: {camera}.",
+            f"Sound: {sound}" if sound else "",
+            f"Music: {music}" if music else "",
+            f"Visual style: {style}." if style else "",
+            f"Keep continuity: {continuity}",
+        ]))
+    if model == "kling-3":
+        return "\n".join(filter(None, [
+            f"Single continuous shot, {clip['duration']} seconds. {setting}. {opening}",
+            f"Bound elements: {refs}." if refs else "",
+            f"Choreography: {sequence}",
+            f"Camera movement and framing: {camera}.",
+            f"Native audio: {sound}" if sound else "",
+            f"Music: {music}" if music else "",
+            f"Style: {style}." if style else "",
+            f"Continuity: {continuity}",
+        ]))
+    if model == "wan-2.6":
+        return "\n".join(filter(None, [
+            f"Characters and scene: {opening} Location: {setting}.",
+            f"References: {refs}." if refs else "",
+            f"Actions: {sequence}",
+            f"Camera: {camera}.",
+            f"Sound: {sound}" if sound else "",
+            f"Background music: {music}" if music else "",
+            f"Style: {style}." if style else "",
+            f"Continuity: {continuity}",
+        ]))
+    if model == "ltx-2":
+        natural_opening = opening.replace("Subjects: ", "").replace("Opening geography: ", "")
+        parts = [f"{style.rstrip(' .')}." if style else "", f"In {setting}, {natural_opening}",
+                 f"Use {refs}." if refs else "", sequence, f"{camera}." if camera else "",
+                 f"The soundscape is {sound.rstrip(' .')}." if sound else "",
+                 f"Music: {music}." if music else "", continuity]
+        return " ".join(part for part in parts if part)
+    raise ValueError(f"Unknown adapter {model}")
+
+
 def compile_prompts(plan, validation, model=None):
     if validation["status"] != "PASS":
         raise ValueError("Scene validation failed; no final prompt may be emitted")
-    model = model or plan.get("model", "minimax-h3")
+    model = model or plan["model"]
     actions = {a["id"]: a for a in plan["actions"]}
     labels = {r["id"]: r.get("label", r["id"]) for r in plan["references"]}
     prompts = []
@@ -382,17 +532,20 @@ def compile_prompts(plan, validation, model=None):
         if model == "generic":
             body = "\n".join([f"Scene: {plan['scene'].get('location', 'unspecified')}. {opening}",
                               f"Camera: {camera}", *beat_lines, f"Continuity: {continuity}"])
+        elif model in {"seedance-2", "veo-3.1", "kling-3", "wan-2.6", "ltx-2"}:
+            body = render_other_model(plan, model, clip, opening, camera, continuity, beat_lines)
         elif model == "minimax-h3":
-            mode = plan.get("h3_mode", "Ref2VA" if plan["references"] else "T2VA")
+            generation_refs = [r for r in plan["references"] if r.get("generation_input", True)]
+            mode = plan.get("h3_mode", "Ref2VA" if generation_refs else "T2VA")
             if mode not in H3_MODES:
                 raise ValueError(f"Unsupported H3 mode {mode}")
-            used_refs = "\n".join(f"{labels[r['id']]} is {r.get('description', r['id'])}; it supplies {r['role']}." for r in plan["references"])
+            used_refs = "\n".join(f"{labels[r['id']]} is {r.get('description', r['id'])}; it supplies {r['role']}." for r in generation_refs)
             if mode == "Ref2VA":
                 body = "\n".join([
                     f"subject_definitions:\n{used_refs}",
                     f"summary: [reference generation] {plan['scene'].get('summary', plan['idea'])}",
-                    "retention_analysis:\n" + "\n".join(f"{labels[r['id']]} ([Shot 1]): fully_preserved - preserve its {r['role']} role." for r in plan["references"]),
-                    f"detailed_description: [Shot 1] {plan['scene'].get('location', '')}. {opening} Camera: {camera}. " + " ".join(beat_lines) + f" Reference roles: {', '.join(labels.values())}. Continuity: {continuity}",
+                    "retention_analysis:\n" + "\n".join(f"{labels[r['id']]} ([Shot 1]): fully_preserved - preserve its {r['role']} role." for r in generation_refs),
+                    f"detailed_description: [Shot 1] {plan['scene'].get('location', '')}. {opening} Camera: {camera}. " + " ".join(beat_lines) + f" Reference roles: {', '.join(labels[r['id']] for r in generation_refs)}. Continuity: {continuity}",
                     f"overall_soundscape: {plan.get('soundscape', 'Natural sound of the visible actions only.')}",
                     f"non_diegetic_music: {plan.get('music', 'None.')}",
                 ])
@@ -463,15 +616,44 @@ def run(plan, model=None):
     return {"validation": validation, "prompts": prompts}
 
 
+def save_project(project_dir, plan, output, model):
+    """Create a reviewable project package without overwriting existing files."""
+    prompts_dir = project_dir / "prompts"
+    prompt_files = [prompts_dir / f"clip-{item['clip']:02d}.txt" for item in output["prompts"]]
+    files = [project_dir / "scene-plan.json", project_dir / "validation.json", project_dir / "project.json", *prompt_files]
+    existing = [path for path in files if path.exists()]
+    if existing:
+        raise FileExistsError(f"Project output already exists: {existing[0]}")
+    project_dir.mkdir(parents=True, exist_ok=True)
+    if prompt_files:
+        prompts_dir.mkdir(exist_ok=True)
+    (project_dir / "scene-plan.json").write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (project_dir / "validation.json").write_text(json.dumps(output["validation"], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    manifest = {"model": model, "status": output["validation"]["status"],
+                "references": [{"id": r["id"], "kind": reference_kind(r), "role": r["role"],
+                                "generation_input": r.get("generation_input", True), "path": r.get("path")}
+                               for r in plan.get("references", [])],
+                "prompts": [str(path.relative_to(project_dir)).replace("\\", "/") for path in prompt_files]}
+    (project_dir / "project.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    for path, item in zip(prompt_files, output["prompts"]):
+        path.write_text(item["prompt"] + "\n", encoding="utf-8")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Validate a ScenePlan and compile video prompts")
     parser.add_argument("plan", type=Path)
-    parser.add_argument("--model", choices=["minimax-h3", "generic"])
+    parser.add_argument("--model", choices=list(MODEL_PROFILES))
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--project-dir", type=Path, help="Save plan, validation and clip prompts in this project folder")
     args = parser.parse_args(argv)
     plan = json.loads(args.plan.read_text(encoding="utf-8"))
     output = run(plan, args.model)
+    if args.project_dir:
+        try:
+            save_project(args.project_dir, {**plan, "model": args.model or plan.get("model")}, output, args.model or plan.get("model"))
+        except (FileExistsError, OSError) as exc:
+            parser.exit(2, f"Project folder error: {exc}\n")
     if args.output:
         args.output.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
     if args.debug or output["validation"]["status"] != "PASS":
