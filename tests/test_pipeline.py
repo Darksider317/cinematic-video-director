@@ -126,10 +126,11 @@ class PipelineTests(unittest.TestCase):
         self.assertIn("MODEL_REQUIRED", [x["code"] for x in output["validation"]["issues"]])
         self.assertEqual(output["prompts"], [])
 
-    def test_five_named_adapters_preserve_approved_actions(self):
+    def test_named_adapters_preserve_approved_actions(self):
         data = load("03-handoff.json")
         expected = [a["description"] for a in data["actions"]]
-        formats = {"seedance-2": "Action sequence:", "veo-3.1": "The action unfolds in this order:",
+        formats = {"seedance-2": "Action sequence:", "seedance-2.5": "Detailed action timeline",
+                   "veo-3.1": "The action unfolds in this order:",
                    "kling-3": "Choreography:", "wan-2.6": "Actions:", "ltx-2": "In hall,"}
         for model, marker in formats.items():
             with self.subTest(model=model):
@@ -142,7 +143,8 @@ class PipelineTests(unittest.TestCase):
     def test_model_duration_profiles(self):
         data = load("01-person-and-object.json")
         data["scene"]["duration"] = 7
-        expected = {"seedance-2": 7, "veo-3.1": 8, "kling-3": 7, "wan-2.6": 10, "ltx-2": 7}
+        expected = {"seedance-2": 7, "seedance-2.5": 7, "veo-3.1": 8,
+                    "kling-3": 7, "wan-2.6": 10, "ltx-2": 7}
         for model, duration in expected.items():
             with self.subTest(model=model):
                 self.assertEqual(run(data, model)["prompts"][0]["duration"], duration)
@@ -161,6 +163,7 @@ class PipelineTests(unittest.TestCase):
     def test_reference_roles_map_to_selected_generator(self):
         data = load("10-reference-previs.json")
         expected = {"seedance-2": ("@Image1", "@Video1"),
+                    "seedance-2.5": ("@Image1", "@Video1"),
                     "kling-3": ("@Ref1", "@Ref2"),
                     "wan-2.6": ("Image 1", "Video 1")}
         for model, labels in expected.items():
@@ -172,6 +175,37 @@ class PipelineTests(unittest.TestCase):
                 self.assertIn(labels[1], prompt)
                 self.assertIn("character identity and clothing", prompt)
                 self.assertIn("blocking, movement path and timing", prompt)
+
+    def test_seedance_25_keeps_25_second_scene_in_one_clip(self):
+        data = load("03-handoff.json")
+        data["scene"]["duration"] = 25
+        older = run(data, "seedance-2")
+        newer = run(data, "seedance-2.5")
+        self.assertEqual(older["validation"]["status"], "PASS")
+        self.assertGreater(len(older["prompts"]), 1)
+        self.assertEqual(newer["validation"]["status"], "PASS", newer["validation"]["issues"])
+        self.assertEqual(len(newer["prompts"]), 1)
+        self.assertEqual(newer["prompts"][0]["duration"], 25)
+        self.assertEqual(newer["prompts"][0]["action_ids"], [a["id"] for a in data["actions"]])
+
+    def test_seedance_25_checks_reference_budgets(self):
+        data = load("03-handoff.json")
+        data["references"] = [{"id": f"image-{n}", "kind": "image", "role": "identity"}
+                              for n in range(31)]
+        output = run(data, "seedance-2.5")
+        self.assertEqual(output["validation"]["status"], "FAIL")
+        self.assertIn("REFERENCE_UNSUPPORTED", [x["code"] for x in output["validation"]["issues"]])
+        self.assertEqual(output["prompts"], [])
+        data["references"] = [{"id": "motion-a", "kind": "video", "role": "blocking", "duration": 18},
+                              {"id": "motion-b", "kind": "video", "role": "camera", "duration": 13}]
+        output = run(data, "seedance-2.5")
+        self.assertEqual(output["validation"]["status"], "FAIL")
+        self.assertIn("30 seconds total", output["validation"]["issues"][0]["message"])
+        data["references"][1]["generation_input"] = False
+        output = run(data, "seedance-2.5")
+        self.assertEqual(output["validation"]["status"], "PASS", output["validation"]["issues"])
+        self.assertIn("@Video1", output["prompts"][0]["prompt"])
+        self.assertNotIn("@Video2", output["prompts"][0]["prompt"])
 
     def test_planning_only_reference_is_not_sent_to_h3(self):
         data = load("01-person-and-object.json")

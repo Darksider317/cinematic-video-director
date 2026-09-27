@@ -5,7 +5,7 @@
   "required": ["idea", "model", "scene", "characters", "objects", "initial_world_state", "actions", "blocking", "camera", "references"],
   "properties": {
     "idea": {"type": "string", "minLength": 1},
-    "model": {"enum": ["minimax-h3", "seedance-2", "veo-3.1", "kling-3", "wan-2.6", "ltx-2", "generic"]},
+    "model": {"enum": ["minimax-h3", "seedance-2", "seedance-2.5", "veo-3.1", "kling-3", "wan-2.6", "ltx-2", "generic"]},
     "h3_mode": {"enum": ["T2VA", "I2VA", "FL2VA", "L2VA", "Ref2VA"]},
     "scene": {"type": "object", "required": ["location", "duration"], "properties": {"location": {"type": "string"}, "duration": {"type": "number", "exclusiveMinimum": 0}, "summary": {"type": "string"}, "style": {"type": "string"}}},
     "characters": {"type": "array", "items": {"$ref": "#/$defs/catalogEntity"}},

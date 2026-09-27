@@ -1,6 +1,6 @@
 ---
 name: cinematic-video-director
-description: Turn an AI video idea into a validated ScenePlan and prompts for MiniMax H3, Seedance 2, Veo 3.1, Kling 3, Wan 2.6, LTX 2 or a generic model. Ask which generator when unspecified and optionally save a project folder.
+description: Turn an AI video idea into a validated ScenePlan and prompts for MiniMax H3, Seedance 2.0, Seedance 2.5, Veo 3.1, Kling 3, Wan 2.6, LTX 2 or a generic model. Ask which generator when unspecified and optionally save a project folder.
 ---
 
 # Cinematic Video Director
@@ -13,7 +13,7 @@ Take the user's original idea through the stages below. Never jump from idea to 
 4. Read [scene-logic-engine](skills/scene-logic-engine/SKILL.md), [blocking-director](skills/blocking-director/SKILL.md), and [continuity-validator](skills/continuity-validator/SKILL.md). Resolve preconditions, paths, transfers, barriers, camera and reference roles before rendering.
 5. Read [shot-timeline-planner](skills/shot-timeline-planner/SKILL.md). Use minimum durations grounded in observable motion. A requested duration may be extended only through an explicit split; do not remove required events.
 6. Run `python scene_pipeline.py path/to/plan.json --debug --output path/to/result.json`. Add `--project-dir PATH` only when the user wants a saved project. A `FAIL` prohibits final prompt delivery. Repair the indicated earlier stage and rerun, at most three iterations. If it still fails, report the concrete blocker; do not quietly rewrite the user's event.
-7. On `PASS`, read the selected adapter: [H3](skills/model-adapters/minimax-h3/SKILL.md), [Seedance 2](skills/model-adapters/seedance-2/SKILL.md), [Veo 3.1](skills/model-adapters/veo-3.1/SKILL.md), [Kling 3](skills/model-adapters/kling-3/SKILL.md), [Wan 2.6](skills/model-adapters/wan-2.6/SKILL.md), [LTX 2](skills/model-adapters/ltx-2/SKILL.md), or [generic](skills/model-adapters/generic/SKILL.md). The compiler verifies the final prompt with [prompt-validator](skills/prompt-validator/SKILL.md). Never allow an adapter to change approved blocking or event order.
+7. On `PASS`, read the selected adapter: [H3](skills/model-adapters/minimax-h3/SKILL.md), [Seedance 2.0](skills/model-adapters/seedance-2/SKILL.md), [Seedance 2.5](skills/model-adapters/seedance-2.5/SKILL.md), [Veo 3.1](skills/model-adapters/veo-3.1/SKILL.md), [Kling 3](skills/model-adapters/kling-3/SKILL.md), [Wan 2.6](skills/model-adapters/wan-2.6/SKILL.md), [LTX 2](skills/model-adapters/ltx-2/SKILL.md), or [generic](skills/model-adapters/generic/SKILL.md). The compiler verifies the final prompt with [prompt-validator](skills/prompt-validator/SKILL.md). Never allow an adapter to change approved blocking or event order.
 
 The CLI's default output is just copyable prompts. Use `--debug` only when the user asks for a report or when repairing. Return only the final prompts by default. If a scene splits, return one prompt per clip in order. Never claim a generated video was tested when only the planning pipeline was tested.
 

@@ -17,6 +17,7 @@ python scene_pipeline.py examples/01-person-and-object.json
 python scene_pipeline.py examples/01-person-and-object.json --debug --output result.json
 python scene_pipeline.py examples/01-person-and-object.json --model generic
 python scene_pipeline.py examples/01-person-and-object.json --model veo-3.1
+python scene_pipeline.py examples/01-person-and-object.json --model seedance-2.5
 python scene_pipeline.py examples/01-person-and-object.json --model kling-3 --project-dir projects/my-scene
 ```
 
@@ -30,7 +31,7 @@ Give each reference an ID, `kind` (`image`, `video`, `audio`), role and optional
 
 ## Adapters
 
-The `model` field is required. Supported values are `minimax-h3`, `seedance-2`, `veo-3.1`, `kling-3`, `wan-2.6`, `ltx-2`, and `generic`. H3 supports T2VA, I2VA, FL2VA, L2VA and Ref2VA structures, 4–15 second clips and a conservative 7000-character prompt guard. Seedance 2 uses 2–15 second clips and `@Image`/`@Video` reference labels. Veo 3.1 uses 4, 6 or 8 seconds, with 8 seconds for generation reference images; it accepts up to three images. Kling 3 uses 3–15 seconds and bound elements. Wan 2.6 conservatively uses 5, 10 or 15 seconds. LTX 2 uses up to 20 seconds for text-to-video. `generic` remains model-neutral. Model versions and provider variants differ; adapters produce prompts and planning durations, not ready-to-send API requests.
+The `model` field is required. Supported values are `minimax-h3`, `seedance-2`, `seedance-2.5`, `veo-3.1`, `kling-3`, `wan-2.6`, `ltx-2`, and `generic`. H3 supports T2VA, I2VA, FL2VA, L2VA and Ref2VA structures, 4–15 second clips and a conservative 7000-character prompt guard. Seedance 2.0 uses 2–15 second clips. Seedance 2.5 has its own 4–30 second generation profile, a structured timeline, and up to 30 images, 10 videos, 10 audio files, and 50 assets total; known video and audio reference durations are each checked against a 30-second total. Both use numbered `@Image`/`@Video`/`@Audio` reference labels in the ModelArk playground. Veo 3.1 uses 4, 6 or 8 seconds, with 8 seconds for generation reference images; it accepts up to three images. Kling 3 uses 3–15 seconds and bound elements. Wan 2.6 conservatively uses 5, 10 or 15 seconds. LTX 2 uses up to 20 seconds for text-to-video. `generic` remains model-neutral. Model versions and provider variants differ; adapters produce prompts and planning durations, not ready-to-send API requests. The Seedance 2.5 adapter currently targets new video generation from text and references; API editing and extension have separate locked duration and aspect-ratio semantics.
 
 To add another adapter, add a `MODEL_PROFILES` entry, implement a formatting branch in `render_other_model` or `compile_prompts`, create an adapter `SKILL.md`, and add a test showing preserved action order and reference roles. The adapter must not modify the approved ScenePlan.
 
@@ -43,7 +44,7 @@ To add another adapter, add a `MODEL_PROFILES` entry, implement a formatting bra
 - [MiniMax official H3 prompt skill](https://github.com/MiniMax-AI/MiniMax-H3/blob/main/skills/h3-prompt-writing/SKILL.md) and [base](https://github.com/MiniMax-AI/MiniMax-H3/blob/main/skills/h3-prompt-writing/references/base-en.txt)/[reference](https://github.com/MiniMax-AI/MiniMax-H3/blob/main/skills/h3-prompt-writing/references/ref-en.txt) guides informed H3 field order, reference labels and duration handling.
 - [Cinematic Director](https://github.com/cajias/agentic-video-skills/blob/master/plugins/cinematic-director/skills/cinematic-director/SKILL.md) informed continuity anchors and shot planning.
 - [Video Storyboard](https://github.com/agentara/skills/blob/main/skills/aigc/video-storyboard/SKILL.md) informed reference role and storyboard continuity checks.
-- Model profiles and prompting conventions were checked against official [Seedance 2](https://docs.byteplus.com/en/docs/byteplus_las/video_gen_enhanced), [Veo 3.1](https://ai.google.dev/gemini-api/docs/veo), [Kling 3](https://kling.ai/quickstart/klingai-video-3-model-user-guide), [Wan](https://www.alibabacloud.com/help/en/model-studio/text-to-video-prompt), and [LTX](https://docs.ltx.io/welcome) documentation.
+- Model profiles and prompting conventions were checked against official [Seedance 2.0](https://docs.byteplus.com/en/docs/byteplus_las/video_gen_enhanced), [Seedance 2.5](https://docs.volcengine.com/docs/ark/seedance-2-5-prompt-guide?lang=zh), [Veo 3.1](https://ai.google.dev/gemini-api/docs/veo), [Kling 3](https://kling.ai/quickstart/klingai-video-3-model-user-guide), [Wan](https://www.alibabacloud.com/help/en/model-studio/text-to-video-prompt), and [LTX](https://docs.ltx.io/welcome) documentation. The 2.5 adapter was also compared with the public [seedance-25 skill](https://github.com/lukasersil/seedance-25/blob/main/SKILL.md); no code was copied.
 
 Their prompt and storyboard guidance is useful after the scene is resolved. This pipeline adds a separate executable state-transition gate before adaptation. No source skill code is copied.
 

@@ -19,6 +19,7 @@ H3_MODES = {"T2VA", "I2VA", "FL2VA", "L2VA", "Ref2VA"}
 MODEL_PROFILES = {
     "minimax-h3": {"min": 4, "max": 15, "allowed": None},
     "seedance-2": {"min": 2, "max": 15, "allowed": None},
+    "seedance-2.5": {"min": 4, "max": 30, "allowed": None},
     "veo-3.1": {"min": 4, "max": 8, "allowed": (4, 6, 8)},
     "kling-3": {"min": 3, "max": 15, "allowed": None},
     "wan-2.6": {"min": 5, "max": 15, "allowed": (5, 10, 15)},
@@ -175,6 +176,19 @@ def validate(plan):
         for ref in plan["references"]:
             if reference_kind(ref) == "unknown":
                 problems.append(issue("AMBIGUITY", f"Reference {ref['id']} needs kind: image, video or audio", "scene-interpreter"))
+    if model == "seedance-2.5":
+        generation_refs = [ref for ref in plan["references"] if ref.get("generation_input", True)]
+        counts = {kind: sum(reference_kind(ref) == kind for ref in generation_refs)
+                  for kind in ("image", "video", "audio")}
+        for kind, limit in (("image", 30), ("video", 10), ("audio", 10)):
+            if counts[kind] > limit:
+                problems.append(issue("REFERENCE_UNSUPPORTED", f"Seedance 2.5 accepts at most {limit} {kind} references", "model-adapter"))
+        if len(generation_refs) > 50:
+            problems.append(issue("REFERENCE_UNSUPPORTED", "Seedance 2.5 accepts at most 50 generation references", "model-adapter"))
+        for kind in ("video", "audio"):
+            total = sum(float(ref.get("duration", 0)) for ref in generation_refs if reference_kind(ref) == kind)
+            if total > 30:
+                problems.append(issue("REFERENCE_UNSUPPORTED", f"Seedance 2.5 {kind} references exceed 30 seconds total", "model-adapter"))
     if model == "minimax-h3":
         generation_refs = [ref for ref in plan["references"] if ref.get("generation_input", True)]
         mode = plan.get("h3_mode", "Ref2VA" if generation_refs else "T2VA")
@@ -435,7 +449,7 @@ def reference_summary(plan, model):
         kind = reference_kind(ref)
         numbers[kind] += 1
         n = numbers[kind]
-        if model == "seedance-2":
+        if model in {"seedance-2", "seedance-2.5"}:
             label = f"@{kind.title()}{n}"
         elif model == "wan-2.6":
             label = f"{kind.title()} {n}"
@@ -467,6 +481,17 @@ def render_other_model(plan, model, clip, opening, camera, continuity, beat_line
             f"Music: {music}" if music else "",
             f"Style: {style}." if style else "",
             f"Continuity: {continuity}",
+        ]))
+    if model == "seedance-2.5":
+        return "\n".join(filter(None, [
+            f"Reference roles: {refs}." if refs else "",
+            f"Scene and subjects: {setting}. {opening}",
+            f"Detailed action timeline ({clip['duration']} seconds): {sequence}",
+            f"Camera and framing: {camera}.",
+            f"Visual style: {style}." if style else "",
+            f"Sound: {sound}" if sound else "",
+            f"Music: {music}" if music else "",
+            f"Keep consistent throughout: {continuity}" if continuity else "",
         ]))
     if model == "veo-3.1":
         return "\n".join(filter(None, [
@@ -532,7 +557,7 @@ def compile_prompts(plan, validation, model=None):
         if model == "generic":
             body = "\n".join([f"Scene: {plan['scene'].get('location', 'unspecified')}. {opening}",
                               f"Camera: {camera}", *beat_lines, f"Continuity: {continuity}"])
-        elif model in {"seedance-2", "veo-3.1", "kling-3", "wan-2.6", "ltx-2"}:
+        elif model in {"seedance-2", "seedance-2.5", "veo-3.1", "kling-3", "wan-2.6", "ltx-2"}:
             body = render_other_model(plan, model, clip, opening, camera, continuity, beat_lines)
         elif model == "minimax-h3":
             generation_refs = [r for r in plan["references"] if r.get("generation_input", True)]
