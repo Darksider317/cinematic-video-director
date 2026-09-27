@@ -1,0 +1,104 @@
+{
+  "idea": "A car drives from left to right",
+  "model": "minimax-h3",
+  "scene": {
+    "location": "empty road",
+    "duration": 6,
+    "summary": "A car drives from left to right"
+  },
+  "characters": [
+    {
+      "id": "car",
+      "description": "red compact car"
+    }
+  ],
+  "objects": [
+    {
+      "id": "sign",
+      "description": "roadside sign"
+    }
+  ],
+  "initial_world_state": {
+    "entities": {
+      "car": {
+        "position": [
+          -3,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      },
+      "sign": {
+        "position": [
+          3,
+          1
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      }
+    }
+  },
+  "actions": [
+    {
+      "id": "drive",
+      "actor": "car",
+      "kind": "move",
+      "description": "The car drives steadily from screen left to screen right past the sign",
+      "min_duration": 4,
+      "effects": [
+        {
+          "type": "move",
+          "entity": "car",
+          "path": [
+            [
+              -3,
+              0
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          "to": [
+            3,
+            0
+          ]
+        }
+      ],
+      "preconditions": []
+    }
+  ],
+  "blocking": {
+    "description": "A stable wide view of the scene.",
+    "constraints": [
+      {
+        "relation": "left_of",
+        "subject": "car",
+        "target": "sign"
+      }
+    ]
+  },
+  "camera": {
+    "position": [
+      0,
+      -4
+    ],
+    "description": "Locked wide shot from the near side."
+  },
+  "references": [],
+  "continuity_constraints": [
+    "Keep identities, geography and prop ownership stable."
+  ]
+}

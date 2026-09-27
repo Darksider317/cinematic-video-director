@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ScenePlan",
+  "type": "object",
+  "required": ["idea", "scene", "characters", "objects", "initial_world_state", "actions", "blocking", "camera", "references"],
+  "properties": {
+    "idea": {"type": "string", "minLength": 1},
+    "model": {"enum": ["minimax-h3", "generic"]},
+    "h3_mode": {"enum": ["T2VA", "I2VA", "FL2VA", "L2VA", "Ref2VA"]},
+    "scene": {"type": "object", "required": ["location", "duration"], "properties": {"location": {"type": "string"}, "duration": {"type": "number", "exclusiveMinimum": 0}, "summary": {"type": "string"}, "style": {"type": "string"}}},
+    "characters": {"type": "array", "items": {"$ref": "#/$defs/catalogEntity"}},
+    "objects": {"type": "array", "items": {"$ref": "#/$defs/catalogEntity"}},
+    "initial_world_state": {"$ref": "#/$defs/worldState"},
+    "actions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/action"}},
+    "blocking": {"type": "object", "properties": {"description": {"type": "string"}, "constraints": {"type": "array", "items": {"$ref": "#/$defs/relation"}}}},
+    "camera": {"type": "object", "properties": {"position": {"$ref": "#/$defs/point"}, "description": {"type": "string"}, "path": {"type": "array", "items": {"$ref": "#/$defs/point"}}}},
+    "references": {"type": "array", "items": {"type": "object", "required": ["id", "role"], "properties": {"id": {"type": "string"}, "label": {"type": "string"}, "role": {"type": "string"}, "description": {"type": "string"}, "path": {"type": "string"}, "duration": {"type": "number", "exclusiveMinimum": 0}}}},
+    "continuity_constraints": {"type": "array", "items": {"type": "string"}},
+    "world_rules": {"type": "array", "items": {"type": "string"}},
+    "strict_validation": {"type": "boolean"},
+    "creative_freedom": {"enum": ["low", "medium", "high"]},
+    "soundscape": {"type": "string"}, "music": {"type": "string"}
+  },
+  "$defs": {
+    "point": {"type": "array", "prefixItems": [{"type": "number"}, {"type": "number"}], "minItems": 2, "maxItems": 2},
+    "catalogEntity": {"type": "object", "required": ["id", "description"], "properties": {"id": {"type": "string"}, "description": {"type": "string"}}},
+    "worldState": {"type": "object", "required": ["entities"], "properties": {"entities": {"type": "object", "additionalProperties": {"type": "object", "required": ["position"], "properties": {"position": {"$ref": "#/$defs/point"}, "facing": {"$ref": "#/$defs/point"}, "pose": {"type": "string"}, "attributes": {"type": "object"}, "held_by": {"type": ["string", "null"]}, "radius": {"type": "number", "minimum": 0}, "max_speed": {"type": "number", "exclusiveMinimum": 0}, "occludes": {"type": "boolean"}, "blocks_movement": {"type": "boolean"}}}}}},
+    "action": {"type": "object", "required": ["id", "actor", "kind", "description", "min_duration", "effects"], "properties": {"id": {"type": "string"}, "actor": {"type": "string"}, "target": {"type": "string"}, "kind": {"enum": ["move", "interact", "transfer", "state_change", "observe", "camera", "supernatural"]}, "description": {"type": "string"}, "min_duration": {"type": "number", "minimum": 0}, "reach": {"type": "number", "minimum": 0}, "fantasy_rule": {"type": "string"}, "must_be_visible": {"type": "boolean"}, "preconditions": {"type": "array", "items": {"type": "object"}}, "effects": {"type": "array", "items": {"type": "object"}}}},
+    "relation": {"type": "object", "required": ["relation", "subject", "target"], "properties": {"relation": {"enum": ["near", "far", "left_of", "right_of", "in_front_of", "behind", "between", "visible_to", "occluded_from", "facing", "holding"]}, "subject": {"type": "string"}, "target": {"type": "string"}, "other": {"type": "string"}, "at": {"type": "string"}, "distance": {"type": "number"}, "tolerance": {"type": "number"}}}
+  }
+}

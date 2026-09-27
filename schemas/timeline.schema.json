@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TimelineClip",
+  "type": "object",
+  "required": ["clip", "duration", "beats"],
+  "properties": {"clip": {"type": "integer", "minimum": 1}, "duration": {"type": "number", "minimum": 0}, "beats": {"type": "array", "items": {"type": "object", "required": ["action_id", "start", "end"], "properties": {"action_id": {"type": "string"}, "start": {"type": "number", "minimum": 0}, "end": {"type": "number", "minimum": 0}}}}
+}

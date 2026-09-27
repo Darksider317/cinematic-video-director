@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ValidationResult",
+  "type": "object",
+  "required": ["status", "severity", "issues"],
+  "properties": {
+    "status": {"enum": ["PASS", "FAIL"]},
+    "severity": {"enum": ["none", "minor", "major", "critical"]},
+    "issues": {"type": "array", "items": {"type": "object", "required": ["code", "message", "stage", "severity", "recommended_fix"], "properties": {"code": {"type": "string"}, "message": {"type": "string"}, "stage": {"type": "string"}, "severity": {"enum": ["minor", "major", "critical"]}, "recommended_fix": {"type": "string"}}}}
+  }
+}

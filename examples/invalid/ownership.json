@@ -1,0 +1,116 @@
+{
+  "idea": "A gives B a key",
+  "model": "minimax-h3",
+  "scene": {
+    "location": "hall",
+    "duration": 6,
+    "summary": "A gives B a key"
+  },
+  "characters": [
+    {
+      "id": "a",
+      "description": "person A"
+    },
+    {
+      "id": "b",
+      "description": "person B"
+    }
+  ],
+  "objects": [
+    {
+      "id": "key",
+      "description": "small metal key"
+    }
+  ],
+  "initial_world_state": {
+    "entities": {
+      "a": {
+        "position": [
+          0,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      },
+      "b": {
+        "position": [
+          1,
+          0
+        ],
+        "facing": [
+          -1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      },
+      "key": {
+        "position": [
+          0,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {},
+        "held_by": "a"
+      }
+    }
+  },
+  "actions": [
+    {
+      "id": "offer",
+      "actor": "a",
+      "kind": "observe",
+      "description": "A extends the key toward B",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": [],
+      "target": "b"
+    },
+    {
+      "id": "handoff",
+      "actor": "a",
+      "kind": "transfer",
+      "description": "B takes the key from A's hand",
+      "min_duration": 1,
+      "effects": [
+        {
+          "type": "transfer",
+          "entity": "key",
+          "from": "b",
+          "to": "b"
+        }
+      ],
+      "preconditions": [
+        {
+          "type": "held_by",
+          "entity": "key",
+          "holder": "a"
+        }
+      ],
+      "target": "key"
+    }
+  ],
+  "blocking": {
+    "description": "A stable wide view of the scene.",
+    "constraints": []
+  },
+  "camera": {
+    "position": [
+      0,
+      -4
+    ],
+    "description": "Locked wide shot from the near side."
+  },
+  "references": [],
+  "continuity_constraints": [
+    "Keep identities, geography and prop ownership stable."
+  ]
+}

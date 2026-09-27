@@ -1,0 +1,106 @@
+{
+  "idea": "A woman picks up a cup",
+  "model": "minimax-h3",
+  "scene": {
+    "location": "kitchen",
+    "duration": 6,
+    "summary": "A woman picks up a cup"
+  },
+  "characters": [
+    {
+      "id": "woman",
+      "description": "woman in a pale blue shirt"
+    }
+  ],
+  "objects": [
+    {
+      "id": "cup",
+      "description": "ceramic cup on the counter"
+    }
+  ],
+  "initial_world_state": {
+    "entities": {
+      "woman": {
+        "position": [
+          0,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      },
+      "cup": {
+        "position": [
+          6,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {},
+        "held_by": null
+      }
+    }
+  },
+  "actions": [
+    {
+      "id": "notice",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman notices the cup",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": [],
+      "target": "cup"
+    },
+    {
+      "id": "pickup",
+      "actor": "woman",
+      "kind": "transfer",
+      "description": "The woman reaches for and lifts the cup with her right hand",
+      "min_duration": 1,
+      "effects": [
+        {
+          "type": "transfer",
+          "entity": "cup",
+          "from": null,
+          "to": "woman"
+        }
+      ],
+      "preconditions": [
+        {
+          "type": "held_by",
+          "entity": "cup",
+          "holder": null
+        }
+      ],
+      "target": "cup"
+    }
+  ],
+  "blocking": {
+    "description": "A stable wide view of the scene.",
+    "constraints": [
+      {
+        "relation": "right_of",
+        "subject": "cup",
+        "target": "woman"
+      }
+    ]
+  },
+  "camera": {
+    "position": [
+      0,
+      -4
+    ],
+    "description": "Locked wide shot from the near side."
+  },
+  "references": [],
+  "continuity_constraints": [
+    "Keep identities, geography and prop ownership stable."
+  ]
+}

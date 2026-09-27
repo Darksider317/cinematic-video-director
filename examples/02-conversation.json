@@ -1,0 +1,115 @@
+{
+  "idea": "Two people talk across a table",
+  "model": "minimax-h3",
+  "scene": {
+    "location": "quiet café",
+    "duration": 7,
+    "summary": "Two people talk across a table"
+  },
+  "characters": [
+    {
+      "id": "ada",
+      "description": "Ada, seated on the left"
+    },
+    {
+      "id": "bo",
+      "description": "Bo, seated on the right"
+    }
+  ],
+  "objects": [
+    {
+      "id": "table",
+      "description": "small café table"
+    }
+  ],
+  "initial_world_state": {
+    "entities": {
+      "ada": {
+        "position": [
+          -1,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      },
+      "bo": {
+        "position": [
+          1,
+          0
+        ],
+        "facing": [
+          -1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      },
+      "table": {
+        "position": [
+          0,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {},
+        "radius": 0.3
+      }
+    }
+  },
+  "actions": [
+    {
+      "id": "line-1",
+      "actor": "ada",
+      "kind": "observe",
+      "description": "Ada speaks while facing Bo",
+      "min_duration": 2,
+      "effects": [],
+      "preconditions": [],
+      "target": "bo"
+    },
+    {
+      "id": "line-2",
+      "actor": "bo",
+      "kind": "observe",
+      "description": "Bo listens then answers Ada",
+      "min_duration": 2,
+      "effects": [],
+      "preconditions": [],
+      "target": "ada"
+    }
+  ],
+  "blocking": {
+    "description": "A stable wide view of the scene.",
+    "constraints": [
+      {
+        "relation": "between",
+        "subject": "table",
+        "target": "ada",
+        "other": "bo"
+      },
+      {
+        "relation": "facing",
+        "subject": "ada",
+        "target": "bo"
+      }
+    ]
+  },
+  "camera": {
+    "position": [
+      0,
+      -4
+    ],
+    "description": "Locked wide shot from the near side."
+  },
+  "references": [],
+  "continuity_constraints": [
+    "Keep identities, geography and prop ownership stable."
+  ]
+}

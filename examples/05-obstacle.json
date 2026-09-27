@@ -1,0 +1,145 @@
+{
+  "idea": "A walks around a crate to a package",
+  "model": "minimax-h3",
+  "scene": {
+    "location": "warehouse",
+    "duration": 9,
+    "summary": "A walks around a crate to a package"
+  },
+  "characters": [
+    {
+      "id": "a",
+      "description": "person A"
+    }
+  ],
+  "objects": [
+    {
+      "id": "crate",
+      "description": "large wooden crate"
+    },
+    {
+      "id": "package",
+      "description": "sealed cardboard package"
+    }
+  ],
+  "initial_world_state": {
+    "entities": {
+      "a": {
+        "position": [
+          0,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      },
+      "crate": {
+        "position": [
+          2,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {},
+        "blocks_movement": true,
+        "radius": 0.4
+      },
+      "package": {
+        "position": [
+          4,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {},
+        "held_by": null
+      }
+    }
+  },
+  "actions": [
+    {
+      "id": "route",
+      "actor": "a",
+      "kind": "move",
+      "description": "A walks around the far side of the crate to the package",
+      "min_duration": 3,
+      "effects": [
+        {
+          "type": "move",
+          "entity": "a",
+          "path": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              1.2
+            ],
+            [
+              3,
+              1.2
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          "to": [
+            4,
+            0
+          ]
+        }
+      ],
+      "preconditions": []
+    },
+    {
+      "id": "collect",
+      "actor": "a",
+      "kind": "transfer",
+      "description": "A picks up the package",
+      "min_duration": 1,
+      "effects": [
+        {
+          "type": "transfer",
+          "entity": "package",
+          "from": null,
+          "to": "a"
+        }
+      ],
+      "preconditions": [],
+      "target": "package"
+    }
+  ],
+  "blocking": {
+    "description": "The crate remains between the starting point and the package.",
+    "constraints": [
+      {
+        "relation": "between",
+        "subject": "crate",
+        "target": "a",
+        "other": "package"
+      }
+    ]
+  },
+  "camera": {
+    "position": [
+      0,
+      -4
+    ],
+    "description": "Locked wide shot from the near side."
+  },
+  "references": [],
+  "continuity_constraints": [
+    "Keep identities, geography and prop ownership stable."
+  ]
+}

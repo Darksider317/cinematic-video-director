@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorldState",
+  "type": "object",
+  "required": ["after", "entities", "camera_position"],
+  "properties": {"after": {"type": "string"}, "entities": {"$ref": "scene-plan.schema.json#/$defs/worldState/properties/entities"}, "camera_position": {"anyOf": [{"$ref": "scene-plan.schema.json#/$defs/point"}, {"type": "null"}]}}
+}

@@ -1,0 +1,99 @@
+{
+  "idea": "A mage levitates a stone",
+  "model": "minimax-h3",
+  "scene": {
+    "location": "courtyard",
+    "duration": 6,
+    "summary": "A mage levitates a stone"
+  },
+  "characters": [
+    {
+      "id": "mage",
+      "description": "robed mage"
+    }
+  ],
+  "objects": [
+    {
+      "id": "stone",
+      "description": "loose stone on the ground"
+    }
+  ],
+  "initial_world_state": {
+    "entities": {
+      "mage": {
+        "position": [
+          0,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      },
+      "stone": {
+        "position": [
+          4,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      }
+    }
+  },
+  "actions": [
+    {
+      "id": "levitate",
+      "actor": "mage",
+      "kind": "supernatural",
+      "description": "The mage raises one hand and the distant stone levitates straight up",
+      "min_duration": 1,
+      "effects": [
+        {
+          "type": "move",
+          "entity": "stone",
+          "path": [
+            [
+              4,
+              0
+            ],
+            [
+              4,
+              2
+            ]
+          ],
+          "to": [
+            4,
+            2
+          ]
+        }
+      ],
+      "preconditions": [],
+      "fantasy_rule": "telekinesis",
+      "target": "stone"
+    }
+  ],
+  "blocking": {
+    "description": "A stable wide view of the scene.",
+    "constraints": []
+  },
+  "camera": {
+    "position": [
+      0,
+      -4
+    ],
+    "description": "Locked wide shot from the near side."
+  },
+  "references": [],
+  "continuity_constraints": [
+    "Keep identities, geography and prop ownership stable."
+  ],
+  "world_rules": [
+    "telekinesis"
+  ]
+}

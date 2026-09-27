@@ -1,0 +1,159 @@
+{
+  "idea": "A opens a door and enters",
+  "model": "minimax-h3",
+  "scene": {
+    "location": "room entrance",
+    "duration": 8,
+    "summary": "A opens a door and enters"
+  },
+  "characters": [
+    {
+      "id": "a",
+      "description": "person A"
+    }
+  ],
+  "objects": [
+    {
+      "id": "door",
+      "description": "wooden hinged door"
+    }
+  ],
+  "initial_world_state": {
+    "entities": {
+      "a": {
+        "position": [
+          0,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      },
+      "door": {
+        "position": [
+          2,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {
+          "open": false
+        }
+      }
+    }
+  },
+  "actions": [
+    {
+      "id": "approach",
+      "actor": "a",
+      "kind": "move",
+      "description": "A walks to the near side of the door",
+      "min_duration": 1,
+      "effects": [
+        {
+          "type": "move",
+          "entity": "a",
+          "path": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "to": [
+            1,
+            0
+          ]
+        }
+      ],
+      "preconditions": []
+    },
+    {
+      "id": "open",
+      "actor": "a",
+      "kind": "state_change",
+      "description": "A turns the handle and opens the door",
+      "min_duration": 1,
+      "effects": [
+        {
+          "type": "set",
+          "entity": "door",
+          "key": "open",
+          "value": true
+        }
+      ],
+      "preconditions": [
+        {
+          "type": "attribute",
+          "entity": "door",
+          "key": "open",
+          "value": false
+        }
+      ],
+      "target": "door"
+    },
+    {
+      "id": "cross",
+      "actor": "a",
+      "kind": "move",
+      "description": "A walks through the open doorway into the room",
+      "min_duration": 1,
+      "effects": [
+        {
+          "type": "move",
+          "entity": "a",
+          "path": [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          "to": [
+            3,
+            0
+          ]
+        }
+      ],
+      "preconditions": [
+        {
+          "type": "attribute",
+          "entity": "door",
+          "key": "open",
+          "value": true
+        }
+      ]
+    }
+  ],
+  "blocking": {
+    "description": "A stable wide view of the scene.",
+    "constraints": []
+  },
+  "camera": {
+    "position": [
+      0,
+      -4
+    ],
+    "description": "Locked wide shot from the near side."
+  },
+  "references": [],
+  "continuity_constraints": [
+    "Keep identities, geography and prop ownership stable."
+  ]
+}

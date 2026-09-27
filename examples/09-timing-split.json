@@ -1,0 +1,253 @@
+{
+  "idea": "A woman picks up a cup",
+  "model": "minimax-h3",
+  "scene": {
+    "location": "kitchen",
+    "duration": 3,
+    "summary": "A woman picks up a cup"
+  },
+  "characters": [
+    {
+      "id": "woman",
+      "description": "woman in a pale blue shirt"
+    }
+  ],
+  "objects": [
+    {
+      "id": "cup",
+      "description": "ceramic cup on the counter"
+    }
+  ],
+  "initial_world_state": {
+    "entities": {
+      "woman": {
+        "position": [
+          0,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      },
+      "cup": {
+        "position": [
+          1,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {},
+        "held_by": null
+      }
+    }
+  },
+  "actions": [
+    {
+      "id": "beat-0",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 0",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-1",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 1",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-2",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 2",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-3",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 3",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-4",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 4",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-5",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 5",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-6",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 6",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-7",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 7",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-8",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 8",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-9",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 9",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-10",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 10",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-11",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 11",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-12",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 12",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-13",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 13",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-14",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 14",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-15",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 15",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-16",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 16",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-17",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 17",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-18",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 18",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    },
+    {
+      "id": "beat-19",
+      "actor": "woman",
+      "kind": "observe",
+      "description": "The woman performs visible beat 19",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": []
+    }
+  ],
+  "blocking": {
+    "description": "A stable wide view of the scene.",
+    "constraints": [
+      {
+        "relation": "right_of",
+        "subject": "cup",
+        "target": "woman"
+      }
+    ]
+  },
+  "camera": {
+    "position": [
+      0,
+      -4
+    ],
+    "description": "Locked wide shot from the near side."
+  },
+  "references": [],
+  "continuity_constraints": [
+    "Keep identities, geography and prop ownership stable."
+  ]
+}

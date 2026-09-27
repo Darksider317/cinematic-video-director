@@ -1,0 +1,105 @@
+{
+  "idea": "A dog noses a ball",
+  "model": "minimax-h3",
+  "scene": {
+    "location": "garden",
+    "duration": 5,
+    "summary": "A dog noses a ball"
+  },
+  "characters": [
+    {
+      "id": "dog",
+      "description": "golden dog"
+    }
+  ],
+  "objects": [
+    {
+      "id": "ball",
+      "description": "red rubber ball"
+    }
+  ],
+  "initial_world_state": {
+    "entities": {
+      "dog": {
+        "position": [
+          0,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      },
+      "ball": {
+        "position": [
+          1,
+          0
+        ],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "standing",
+        "attributes": {}
+      }
+    }
+  },
+  "actions": [
+    {
+      "id": "sniff",
+      "actor": "dog",
+      "kind": "interact",
+      "description": "The dog leans in and sniffs the ball",
+      "min_duration": 1,
+      "effects": [],
+      "preconditions": [],
+      "target": "ball"
+    },
+    {
+      "id": "nudge",
+      "actor": "dog",
+      "kind": "interact",
+      "description": "The dog nudges the ball with its nose",
+      "min_duration": 1,
+      "effects": [
+        {
+          "type": "move",
+          "entity": "ball",
+          "path": [
+            [
+              1,
+              0
+            ],
+            [
+              1.5,
+              0
+            ]
+          ],
+          "to": [
+            1.5,
+            0
+          ]
+        }
+      ],
+      "preconditions": [],
+      "target": "ball"
+    }
+  ],
+  "blocking": {
+    "description": "A stable wide view of the scene.",
+    "constraints": []
+  },
+  "camera": {
+    "position": [
+      0,
+      -4
+    ],
+    "description": "Locked wide shot from the near side."
+  },
+  "references": [],
+  "continuity_constraints": [
+    "Keep identities, geography and prop ownership stable."
+  ]
+}
